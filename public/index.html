@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10152b">
+<title>Olix — Assistente</title>
+<style>
+:root{color-scheme:dark;--bg:#0c1020;--panel:#171d35;--accent:#9d8cff;--text:#f4f5ff;--muted:#aeb5d1}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#25244f,var(--bg) 55%);color:var(--text);font:16px system-ui,sans-serif;min-height:100vh}
+main{max-width:680px;margin:auto;padding:22px 16px 36px}.brand{text-align:center;padding:24px 0 18px}
+.orb{width:94px;height:94px;border-radius:50%;margin:0 auto 12px;background:linear-gradient(135deg,#8e7dff,#54d7ff);box-shadow:0 0 35px #7d71ff77;display:grid;place-items:center;font-size:40px}
+h1{margin:0;font-size:30px}p{color:var(--muted);line-height:1.45}.panel{background:#171d35dd;border:1px solid #353b5c;border-radius:20px;padding:16px;margin:14px 0}
+#chat{height:34vh;min-height:220px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.msg{padding:11px 13px;border-radius:14px;max-width:90%;line-height:1.4;white-space:pre-wrap}.olix{background:#252b4b;align-self:flex-start}.you{background:#6355bd;align-self:flex-end}
+.row{display:flex;gap:8px;margin-top:10px}input,button{font:inherit;border-radius:13px;border:1px solid #41496b;padding:12px;color:var(--text)}input{background:#0d1227;min-width:0;flex:1}button{background:#6b5bd0;cursor:pointer}button.secondary{background:#242b49}button:disabled{opacity:.5;cursor:wait}
+small{color:var(--muted)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions button{width:100%}
+label{display:block;color:var(--muted);font-size:14px;margin:10px 0 5px}.plans{display:grid;grid-template-columns:1fr 1fr;gap:10px}.plan{border:1px solid #41496b;border-radius:15px;padding:13px}.plan h3{margin:0 0 6px}.selected{border-color:#9d8cff;box-shadow:0 0 0 1px #9d8cff}
+</style>
+</head>
+<body><main>
+<header class="brand"><div class="orb">✦</div><h1>Olix</h1><p>Sua assistente pessoal • versão de desenvolvimento</p></header>
+<section class="panel">
+  <div id="chat" aria-live="polite"></div>
+  <div class="row"><input id="entry" placeholder="Escreva para a Olix…" autocomplete="off"><button id="send">Enviar</button></div>
+  <div class="row"><button id="listen" class="secondary" style="flex:1">🎙️ Falar com a Olix</button><button id="stop" class="secondary">🔇 Parar voz</button></div>
+  <small id="status">Pronta. Para respostas inteligentes, inicie o servidor e configure a chave da IA.</small>
+</section>
+<section class="panel"><b>Plano da conta (demonstração)</b><p>Escolha a interface do plano. A seleção ainda não cobra e não libera pagamentos reais.</p>
+<div class="plans">
+ <div id="freePlan" class="plan selected"><h3>Grátis</h3><p>Limite de mensagens por dia.</p><button class="secondary" id="chooseFree">Usar grátis</button></div>
+ <div id="premiumPlan" class="plan"><h3>Premium</h3><p>Mais mensagens e recursos avançados.</p><button id="choosePremium">Conhecer Premium</button></div>
+</div><small id="planStatus">Plano selecionado: Grátis.</small></section>
+<section class="panel"><b>Atalhos</b><div class="actions" style="margin-top:12px">
+<button class="secondary" data-cmd="Que horas são?">🕒 Que horas são?</button><button class="secondary" data-cmd="Que dia é hoje?">📅 Data de hoje</button>
+<button class="secondary" data-cmd="Me ajude a criar um lembrete">⏰ Criar lembrete</button><button class="secondary" data-cmd="O que você consegue fazer?">✨ O que você faz?</button>
+</div></section>
+<section class="panel"><b>Memória local</b><p>O apelido fica salvo neste navegador, neste aparelho.</p>
+<label for="username">Como você quer que a Olix te chame?</label><div class="row"><input id="username" placeholder="Seu nome ou apelido"><button id="save">Salvar</button></div><small id="saved"></small></section>
+<section class="panel"><b>Configuração</b><p>Não coloque sua chave de API nesta página. Ela deve ficar somente no servidor. A conversa com IA exige internet e um servidor configurado.</p></section>
+</main>
+<script>
+const $=s=>document.querySelector(s), chat=$('#chat'), status=$('#status');
+let historyForApi=[];
+function add(text,who='olix'){let d=document.createElement('div');d.className='msg '+who;d.textContent=text;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d}
+function speak(t){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=1;let v=speechSynthesis.getVoices().find(x=>/^pt-BR/i.test(x.lang));if(v)u.voice=v;speechSynthesis.speak(u)}
+async function answer(raw){let q=raw.trim();if(!q)return;add(q,'you');$('#entry').value='';$('#send').disabled=true;let name=localStorage.getItem('olix-name')||'';let l=q.toLowerCase();let a='';
+try {
+ if(/que horas|hora agora/.test(l)) a='Agora são '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'.';
+ else if(/que dia|data de hoje|hoje é/.test(l)) a='Hoje é '+new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'.';
+ else if(/lembrete/.test(l)) a='Posso ajudar a organizar o lembrete, mas esta versão não agenda notificações. Configure um alarme no app Relógio do celular.';
+ else if(/o que você consegue|ajuda|fazer/.test(l)) a='Posso conversar com IA quando o servidor estiver conectado, falar em voz alta e responder hora e data. Também guardo seu apelido neste navegador.';
+ else {
+   status.textContent='A Olix está pensando…';
+   const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,history:historyForApi.slice(-10),name})});
+   const data=await r.json();
+   if(!r.ok) throw new Error(data.error||'Não foi possível falar com a IA.');
+   a=data.reply; historyForApi.push({role:'user',content:q},{role:'assistant',content:a});
+ }
+ add(a);speak(a);status.textContent='Pronta.';
+} catch(e){a='Ainda não consegui conectar à IA. '+(e.message||'Confira se o servidor está rodando e configurado.');add(a);status.textContent='IA não conectada.'}
+finally{$('#send').disabled=false;$('#entry').focus()}}
+$('#send').onclick=()=>answer($('#entry').value);$('#entry').addEventListener('keydown',e=>{if(e.key==='Enter')answer($('#entry').value)});
+document.querySelectorAll('[data-cmd]').forEach(b=>b.onclick=()=>answer(b.dataset.cmd));
+$('#stop').onclick=()=>{if('speechSynthesis'in window)speechSynthesis.cancel();status.textContent='Voz parada.'};
+$('#listen').onclick=()=>{let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){status.textContent='Reconhecimento de voz não suportado neste navegador. Use o Chrome ou digite.';return}let r=new SR();r.lang='pt-BR';r.interimResults=false;r.maxAlternatives=1;status.textContent='Estou ouvindo…';r.onresult=e=>answer(e.results[0][0].transcript);r.onerror=e=>status.textContent='Falha no microfone: '+e.error+'. Confira as permissões.';r.start()};
+$('#save').onclick=()=>{let n=$('#username').value.trim();if(n){localStorage.setItem('olix-name',n);$('#saved').textContent='Salvo neste navegador.';add('Prazer, '+n+'! Vou usar esse nome neste navegador.')}};
+let existing=localStorage.getItem('olix-name');if(existing){$('#username').value=existing;$('#saved').textContent='Nome salvo neste navegador.'}
+function selectPlan(plan){$('#freePlan').classList.toggle('selected',plan==='free');$('#premiumPlan').classList.toggle('selected',plan==='premium');$('#planStatus').textContent=plan==='free'?'Plano selecionado: Grátis.':'Premium selecionado apenas para demonstração. Pagamentos ainda não estão ativos.'}
+$('#chooseFree').onclick=()=>selectPlan('free');$('#choosePremium').onclick=()=>{selectPlan('premium');add('O Premium terá mais conversas e recursos avançados. A assinatura real precisa ser integrada à Google Play antes do lançamento.')}
+add('Oi! Eu sou a Olix. Pode escrever comigo ou tocar no microfone. Para perguntas abertas, preciso que o servidor de IA esteja ligado.');
+</script></body></html>
