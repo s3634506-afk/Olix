@@ -1,0 +1,28 @@
+# OLIX — versão de desenvolvimento
+
+Esta versão mantém a interface web e adiciona uma rota de servidor para conversar com uma IA. O plano Grátis/Premium na tela é somente visual: ainda não cobra e não autentica assinantes.
+
+## Arquivos
+- `public/index.html`: interface da Olix.
+- `server.js`: servidor e rota `/api/chat`.
+- `.env.example`: modelo de configuração.
+
+## Executar em um computador
+1. Instale uma versão LTS recente do Node.js.
+2. Copie `.env.example` para `.env`.
+3. No arquivo `.env`, coloque sua chave de API em `OPENAI_API_KEY`. Nunca coloque a chave dentro do HTML nem a compartilhe.
+4. No terminal, dentro da pasta do projeto, execute `npm install`.
+5. Execute `npm start`.
+6. Abra `http://localhost:3000`.
+
+## Testar no Android
+O HTML aberto diretamente no Chrome não consegue chamar `/api/chat`, pois a rota só existe quando o servidor está em execução. Para usar no Redmi A5, hospede o servidor em HTTPS e abra o endereço publicado no Chrome. O reconhecimento de voz depende do navegador e das permissões do microfone.
+
+## O que ainda falta antes de lançar
+- Hospedagem HTTPS e proteção contra abuso (limites por usuário, autenticação e monitoramento de custos).
+- Login e contas de usuário.
+- Limites reais do plano grátis e verificação de assinatura Premium no servidor.
+- Integração de assinatura com Google Play Billing em um app Android nativo ou wrapper compatível.
+- Política de privacidade, termos, testes e preparação para publicação na Google Play.
+
+A seleção Grátis/Premium na página é apenas uma demonstração de interface. Não existe cobrança real nesta versão.
